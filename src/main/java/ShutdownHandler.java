@@ -10,16 +10,33 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+/**
+ * Shutdown handler for the embedded static server.
+ * Handles a POST request with a special URL as a shutdown command.
+ *
+ * @author Darian Bridge.
+ */
 public class ShutdownHandler extends AbstractHandler
 {
+    /** A logger. */
     private static final Logger log = Log.getLogger(ShutdownHandler.class);
 
+    /** The server. */
     private final Server server;
 
+    /**
+     * Constructor.
+     *
+     * @param server The server.
+     */
     public ShutdownHandler(final Server server)
     {
         this.server = server;
     }
+
+    /**
+     * Handle the request. Looks for the shutdown command in a POST request.
+     */
     @Override
     public void handle(final String target, final Request baseRequest,
             final HttpServletRequest request, final HttpServletResponse response)

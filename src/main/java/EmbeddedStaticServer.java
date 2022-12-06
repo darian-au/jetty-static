@@ -27,14 +27,24 @@ import org.eclipse.jetty.util.resource.PathResource;
  */
 public class EmbeddedStaticServer
 {
+    /** A logger. */
     private static final Logger log = Log.getLogger(EmbeddedStaticServer.class);
 
+    /** The server. */
     private Server server;
 
+    /** The http port. */
     private int httpPort;
 
+    /** The static file directory. */
     private File staticDir;
 
+    /**
+     * Constructor.
+     *
+     * @param httpPort the http port.
+     * @param staticDir the static file directory.
+     */
     public EmbeddedStaticServer(final int httpPort, final File staticDir)
     {
         this.httpPort = httpPort;
@@ -66,12 +76,22 @@ public class EmbeddedStaticServer
         }
     }
 
+    /**
+     * Start the server.
+     *
+     * @throws Exception thrown if a problem occurs.
+     */
     public void start() throws Exception
     {
         server.start();
         server.join();
     }
 
+    /**
+     * Stop the server. Establishes a HTTP connection to the server to send a POST request with the shutdown command.
+     *
+     * @throws IOException thrown if a problem occurs.
+     */
     public void stop() throws IOException
     {
         try
@@ -91,6 +111,9 @@ public class EmbeddedStaticServer
         }
     }
 
+    /**
+     * Create the server and establish the handler chain.
+     */
     public void create()
     {
         server = new Server();
