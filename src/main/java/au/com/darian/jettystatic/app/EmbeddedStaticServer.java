@@ -29,7 +29,7 @@ import org.eclipse.jetty.util.resource.PathResource;
 public class EmbeddedStaticServer
 {
     /** A logger. */
-    private static final Logger log = Log.getLogger(EmbeddedStaticServer.class);
+    private final Logger log;
 
     /** The server. */
     private Server server;
@@ -48,6 +48,8 @@ public class EmbeddedStaticServer
      */
     public EmbeddedStaticServer(final int httpPort, final File staticDir)
     {
+        this.log = Log.getLogger(this.getClass());
+
         this.httpPort = httpPort;
         this.staticDir = staticDir;
     }
@@ -60,6 +62,15 @@ public class EmbeddedStaticServer
      */
     public static void main(final String[] args) throws Exception
     {
+        if (args.length < 1)
+        {
+            System.out.println("usage: " + EmbeddedStaticServer.class.getSimpleName() + " (start | stop) [httpPort] [staticDir]");
+            System.out.println("  httpPort:   the web server port, default port 8080");
+            System.out.println("  staticDir:  the static directory to serve files from, default the current directory '.'");
+
+            return;
+        }
+
         boolean shutdown = args.length < 1 ? false : "stop".equalsIgnoreCase(args[0]);
         int httpPort = Integer.parseInt(args.length < 2 ? "8080" : args[1]);
         File staticDir = new File(args.length < 3 ? "." : args[2]);
