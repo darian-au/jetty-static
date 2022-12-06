@@ -1,3 +1,4 @@
+package au.com.darian.jettystatic.app;
 
 import java.io.File;
 import java.io.IOException;
