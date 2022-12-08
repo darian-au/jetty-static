@@ -13,6 +13,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -64,7 +65,7 @@ public class EmbeddedStaticServer
         this.httpPort = httpPort;
         this.staticDir = staticDir;
 
-        this.token = System.getProperty("token", "679e6682dfbd7b22eeffef6bd02ac7b2");
+        this.token = System.getProperty("app.token", "679e6682dfbd7b22eeffef6bd02ac7b2");
     }
 
     /**
@@ -208,7 +209,12 @@ public class EmbeddedStaticServer
         // Access handler.
         HeaderAccessHandler accessHandler = new HeaderAccessHandler();
         Map<String, List<String>> headerItems = new HashMap<String, List<String>>();
-        headerItems.put("User-Agent", Arrays.asList("Java", "Let's Encrypt validation server"));
+        headerItems.put(HttpHeader.USER_AGENT.toString(), Arrays.asList(
+            // Shutdown handler.
+            System.getProperty("app.agent.java", "Java"),
+            // Let's Encrypt validation server.
+            System.getProperty("app.agent.letsencrypt", "Let's Encrypt validation server")
+        ));
         accessHandler.setHeaderItems(headerItems);
 
         // Wrap the resource handler with the access handler.
