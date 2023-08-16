@@ -14,7 +14,4 @@ Easily start and stop the server from the command line, optionally specifying th
 
 Example usage:
 
-    java -jar jetty-static.jar start 80 ~/www/ &
-
-
-    java -jar jetty-static.jar stop
+    java -jar jetty-static.jar start 8080 ~/www/ &
