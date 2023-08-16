@@ -34,7 +34,7 @@ import org.eclipse.jetty.util.resource.PathResource;
 /**
  * Runs the Embedded Jetty HTTP Static File Server.
  *
- * @author Darian Bridge.
+ * @author Darian
  */
 public class EmbeddedStaticServer
 {

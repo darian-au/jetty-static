@@ -16,7 +16,7 @@ import org.eclipse.jetty.util.log.Logger;
  * Extends the {@link InetAccessHandler} and filters on the Request Headers.
  * If the {@link #setHeaderItems()} are not set, then falls back to {@link InetAccessHandler} behavior.
  *
- * @author Darian Bridge.
+ * @author Darian
  */
 public class HeaderAccessHandler extends InetAccessHandler
 {
