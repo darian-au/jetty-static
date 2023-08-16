@@ -9,11 +9,12 @@ Easily start and stop the server from the command line, optionally specifying th
 
     java -jar jetty-static.jar (start | stop) [httpPort] [staticDir]
 
-  `httpPort`:   the web server port, default port `8080`
-  `staticDir`:  the static directory to serve files from, default the current directory `.`
+  `httpPort`:   the web server port, default port `8080`  
+  `staticDir`:  the static directory to serve files from, default the current directory `.`  
 
 Example usage:
 
     java -jar jetty-static.jar start 80 ~/www/ &
+
 
     java -jar jetty-static.jar stop
