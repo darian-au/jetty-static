@@ -10,13 +10,13 @@
  
   <groupId>jetty-static</groupId>
   <artifactId>jetty-static</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
  
   <packaging>jar</packaging>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jetty.version>9.4.51.v20230217</jetty.version>
+    <jetty.version>9.4.52.v20230823</jetty.version>
   </properties>
   
   <build>
@@ -153,6 +153,7 @@
           </plugin>
           
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-assembly-plugin</artifactId>
             <version>3.6.0</version>
             <configuration>
