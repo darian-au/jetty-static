@@ -12,7 +12,7 @@ Easily start and stop the server from the command line, optionally specifying th
   `staticDir`:    the static directory to serve files from, default the current directory `.`  
   `httpPort`:     the web server http port, default port `8080`  
   `securePort`:   the web server secure https port, default disabled (port `0`)  
-  `keystoreType`: the type of jks keystore file, eg PKCS12  
+  `keystoreType`: the type of jks keystore file, eg `PKCS12`  
   `keystoreFile`: the path to the jks keystore file  
   `keystorePwd`:  the jks keystore password  
 
