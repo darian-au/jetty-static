@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -14,13 +15,16 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.RequestLog;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -30,6 +34,8 @@ import org.eclipse.jetty.server.handler.ShutdownHandler;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.resource.PathResource;
+import org.eclipse.jetty.util.security.Credential;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 /**
  * Runs the Embedded Jetty HTTP Static File Server.
@@ -45,25 +51,49 @@ public class EmbeddedStaticServer
     private Server server;
 
     /** The http port. */
-    private int httpPort;
+    private final int httpPort;
+
+    /** The secure https port. */
+    private final int securePort;
+
+    /** The type of keystore file. */
+    private final String keystoreType;
+
+    /** The path to the keystore file. */
+    private final String keystoreFile;
+
+    /** The keystore password. */
+    private final String keystorePassword;
 
     /** The static file directory. */
-    private File staticDir;
+    private final File staticDir;
 
-    private String token;
+    /** A token used for shutdown. */
+    private final String token;
 
     /**
      * Constructor.
      *
-     * @param httpPort the http port.
      * @param staticDir the static file directory.
+     * @param httpPort the http port.
+     * @param securePort the secure https port.
+     * @param keystoreType the type of keystore file.
+     * @param keystoreFile the path to the keystore file.
+     * @param keystorePassword the keystore password.
      */
-    public EmbeddedStaticServer(final int httpPort, final File staticDir)
+    public EmbeddedStaticServer(final File staticDir, final int httpPort, final int securePort,
+            final String keystoreType, final String keystoreFile, final String keystorePassword)
     {
         this.log = Log.getLogger(this.getClass());
 
-        this.httpPort = httpPort;
         this.staticDir = staticDir;
+
+        this.httpPort = httpPort;
+        this.securePort = securePort;
+
+        this.keystoreType = keystoreType;
+        this.keystoreFile = keystoreFile;
+        this.keystorePassword = keystorePassword;
 
         this.token = System.getProperty("app.token", "679e6682dfbd7b22eeffef6bd02ac7b2");
     }
@@ -78,18 +108,32 @@ public class EmbeddedStaticServer
     {
         if (args.length < 1)
         {
-            System.out.println("usage: " + EmbeddedStaticServer.class.getSimpleName() + " (start | stop) [httpPort] [staticDir]");
-            System.out.println("  httpPort:   the web server port, default port 8080");
-            System.out.println("  staticDir:  the static directory to serve files from, default the current directory '.'");
+            System.out.println("usage: " + EmbeddedStaticServer.class.getSimpleName() + " (start | stop) [staticDir] [httpPort] [securePort] [keystoreType] [keystoreFile] [keystorePwd]");
+            System.out.println("  staticDir:    the static directory to serve files from, default the current directory '.'");
+            System.out.println("  httpPort:     the web server http port, default port 8080");
+            System.out.println("  securePort:   the web server secure https port, default disabled (port 0)");
+            System.out.println("  keystoreType: the type of jks keystore file");
+            System.out.println("  keystoreFile: the path to the jks keystore file");
+            System.out.println("  keystorePwd:  the jks keystore password");
+            System.out.println();
+            System.out.println("create keystore file:");
+            System.out.println("  openssl pkcs12 -export -inkey privatekey.pem -in fullchain.pem -out keystore.pkcs12 -passout pass:pkcs12password -legacy");
+            System.out.println("  keytool -importkeystore -noprompt -srckeystore keystore.pkcs12 -srcstoretype pkcs12 -srcstorepass pkcs12password -destkeystore keystore.jks -deststorepass jkspassword");
+            System.out.println();
 
             return;
         }
 
         boolean shutdown = args.length < 1 ? false : "stop".equalsIgnoreCase(args[0]);
-        int httpPort = Integer.parseInt(args.length < 2 ? "8080" : args[1]);
-        File staticDir = getFile(args.length < 3 ? "." : args[2]);
+        File staticDir = getFile(args.length < 2 ? "." : args[1]);
+        int httpPort = Integer.parseInt(args.length < 3 ? "8080" : args[2]);
+        int securePort = Integer.parseInt(args.length < 4 ? "0" : args[3]);
+        String keystoreType = args.length < 5 ? "PKCS12" : args[4];
+        String keystoreFile = args.length < 6 ? "keystore.jks" : args[5];
+        String keystorePassword = args.length < 7 ? "jkspassword" : args[6];
 
-        EmbeddedStaticServer launcher = new EmbeddedStaticServer(httpPort, staticDir);
+        EmbeddedStaticServer launcher = new EmbeddedStaticServer(staticDir, httpPort,
+                securePort, keystoreType, keystoreFile, keystorePassword);
 
         if (shutdown)
         {
@@ -97,7 +141,14 @@ public class EmbeddedStaticServer
         }
         else
         {
-            launcher.log.info("Starting. httpPort: [" + httpPort + "] staticDir: " + staticDir);
+            launcher.log.info("Starting."
+                + (httpPort > 0 ? (
+                        " httpPort: [" + httpPort + "]") : "")
+                + (securePort > 0 ? (
+                        " securePort: [" + securePort + "]"
+                                + " keystoreType: [" + keystoreType + "]"
+                                + " keystoreFile: [" + keystoreFile + "]") : "")
+                + " staticDir: [" + staticDir + "]");
 
             launcher.create();
             launcher.start();
@@ -173,13 +224,45 @@ public class EmbeddedStaticServer
     {
         server = new Server();
 
-        HttpConfiguration httpConfig = new HttpConfiguration();
+        List<Connector> connectors = new ArrayList<Connector>();
 
-        ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
-        http.setPort(httpPort);
+        if (httpPort > 0)
+        {
+            HttpConfiguration config = new HttpConfiguration();
 
+            if (securePort > 0)
+            {
+                config.setSecurePort(securePort);
+            }
 
-        server.setConnectors(new Connector[] {http});
+            ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(config));
+            connector.setPort(httpPort);
+
+            connectors.add(connector);
+        }
+
+        if (securePort > 0)
+        {
+            HttpConfiguration config = new HttpConfiguration();
+            config.addCustomizer(new SecureRequestCustomizer());
+
+            String password = Credential.getCredential(keystorePassword).toString();
+
+            SslContextFactory context = new SslContextFactory.Server();
+            context.setKeyStorePath(keystoreFile);
+            context.setKeyStorePassword(password);
+            context.setKeyManagerPassword(password);
+            context.setKeyStoreType(keystoreType);
+
+            ServerConnector connector = new ServerConnector(server,
+                    new SslConnectionFactory(context, HttpVersion.HTTP_1_1.asString()),
+                    new HttpConnectionFactory(config));
+            connector.setPort(securePort);
+
+            connectors.add(connector);
+        }
+
+        server.setConnectors(connectors.toArray(new Connector[connectors.size()]));
 
         // Set up the handler chain.
         HandlerCollection handlers = new HandlerList();
