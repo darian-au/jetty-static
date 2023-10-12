@@ -112,13 +112,13 @@ public class EmbeddedStaticServer
             System.out.println("  staticDir:    the static directory to serve files from, default the current directory '.'");
             System.out.println("  httpPort:     the web server http port, default port 8080");
             System.out.println("  securePort:   the web server secure https port, default disabled (port 0)");
-            System.out.println("  keystoreType: the type of jks keystore file");
+            System.out.println("  keystoreType: the type of jks keystore file, eg PKCS12");
             System.out.println("  keystoreFile: the path to the jks keystore file");
             System.out.println("  keystorePwd:  the jks keystore password");
             System.out.println();
             System.out.println("create keystore file:");
             System.out.println("  openssl pkcs12 -export -inkey privatekey.pem -in fullchain.pem -out keystore.pkcs12 -passout pass:pkcs12password -legacy");
-            System.out.println("  keytool -importkeystore -noprompt -srckeystore keystore.pkcs12 -srcstoretype pkcs12 -srcstorepass pkcs12password -destkeystore keystore.jks -deststorepass jkspassword");
+            System.out.println("  keytool -importkeystore -noprompt -srckeystore keystore.pkcs12 -srcstoretype pkcs12 -srcstorepass pkcs12password -destkeystore keystore.jks -deststorepass jkspassword -destkeypass jkspassword -deststoretype pkcs12");
             System.out.println();
 
             return;
